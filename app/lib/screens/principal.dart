@@ -4,7 +4,11 @@ import 'package:wob_app/blocs/blocs.dart';
 import 'package:wob_app/views/map_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wob_app/screens/map_widget.dart';
-import 'package:wob_app/providers/map/rotes_provider.dart';
+import 'package:wob_app/widgets/itnerary_card.dart';
+import 'package:wob_app/data/model/itinerary_model.dart';
+import 'package:wob_app/data/repositories/user_repository.dart';
+import 'package:wob_app/data/repositories/itinerary_repository.dart';
+import 'package:wob_app/providers/synchronization/itinerary/itinerary_sync_provider.dart';
 
 class Principal extends StatefulWidget {
   const Principal({super.key});
@@ -14,91 +18,45 @@ class Principal extends StatefulWidget {
 }
 
 class _PrincipalState extends State<Principal> {
+  int _index = 0;
+
   @override
   Widget build(BuildContext context) {
     final blocProvider = BlocProvider.of<GpsBloc>(context);
-    final size = MediaQuery.of(context).size;
     blocProvider.add(CheckPermissionsEvent());
 
     return Scaffold(
-        backgroundColor: const Color.fromRGBO(40, 48, 54, 10),
+        // backgroundColor: const Color.fromRGBO(40, 48, 54, 10),
+        appBar: AppBar(
+          elevation: 0,
+          leading: const Icon(Icons.menu),
+          title: const Text("Home"),
+          actions: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Container(
+                width: 36,
+                height: 30,
+                decoration: BoxDecoration(
+                    color: Colors.grey[800],
+                    borderRadius: BorderRadius.circular(10)),
+                child: const Center(child: Text("0")),
+              ),
+            )
+          ],
+          backgroundColor: Colors.amber.shade700,
+        ),
         body: BlocBuilder<GpsBloc, GpsState>(
           builder: (context, state) {
-            return SizedBox(
-              height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [_buildStartButton(state.hasPermissions)],
-              ),
+            return Hero(
+              tag: "map",
+              child: ListView.builder(
+                  itemCount: 6,
+                  itemBuilder: (context, index) =>
+                      const ItineraryCard(title: "Colegio Cañaverales (CIS)")),
             );
           },
         ));
-  }
-
-  Widget _listView() {
-    return ListWheelScrollView(
-      itemExtent: 3,
-      useMagnifier: true,
-      magnification: 1.5,
-      children: <Widget>[
-        // Card(
-        //   elevation: 3,
-        //   shape: RoundedRectangleBorder(
-        //     side: BorderSide(
-        //       color: Theme.of(context).colorScheme.outline,
-        //     ),
-        //     borderRadius: const BorderRadius.all(Radius.circular(0)),
-        //   ),
-        //   child: const SizedBox(
-        //       // height: 50,
-        //       child: Column(
-        //     mainAxisAlignment: MainAxisAlignment.center,
-        //     children: [
-        //       ListTile(
-        //           leading: Icon(Icons.bus_alert_rounded),
-        //           title: Text('Ruta 1')),
-        //       // ListTile(leading: Icon(Icons.arrow_forward_ios))
-        //     ],
-        //   )),
-        // ),
-        // Card(
-        //   elevation: 3,
-        //   shape: RoundedRectangleBorder(
-        //     side: BorderSide(
-        //       color: Theme.of(context).colorScheme.outline,
-        //     ),
-        //     borderRadius: const BorderRadius.all(Radius.circular(0)),
-        //   ),
-        //   child: const SizedBox(
-        //       // height: 50,
-        //       child: Column(
-        //     mainAxisAlignment: MainAxisAlignment.center,
-        //     children: [
-        //       ListTile(
-        //           leading: Icon(Icons.bus_alert_rounded),
-        //           title: Text('Ruta 1')),
-        //       // ListTile(leading: Icon(Icons.arrow_forward_ios))
-        //     ],
-        //   )),
-        // ),
-        ListTile(
-          leading: Icon(
-            Icons.map,
-          ),
-          title: Text('Map'),
-        ),
-        ListTile(
-          leading: Icon(Icons.photo_album),
-          title: Text('Album'),
-        ),
-        ListTile(
-          leading: Icon(Icons.phone),
-          title: Text('Phone'),
-        ),
-      ],
-    );
   }
 
   Widget _buildStartButton(bool hasPermissions) {
@@ -110,12 +68,41 @@ class _PrincipalState extends State<Principal> {
                   builder: (context) => MultiProvider(
                     providers: [
                       ChangeNotifierProvider(
-                        create: (context) => RoutesProvider(),
+                        create: (context) => ItinerarySyncProvider(),
+                        lazy: true,
+                      ),
+                      ChangeNotifierProvider(
+                        create: (context) => UserRepository(),
                         lazy: true,
                       )
                     ],
                     builder: (context, child) {
-                      return const MapWidget();
+                      final userRepository =
+                          Provider.of<UserRepository>(context, listen: true);
+
+                      // userRepository.getUser().then((value) {
+                      //   print(value);
+                      // });
+
+                      // final repository = ItineraryRepository();
+
+                      // repository
+                      //     .getList(ItineraryModel(1))
+                      //     .then((value) => print('repository $value'));
+                      // print('before future');
+
+                      FutureBuilder(
+                        future: userRepository.getUser(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            return const CircularProgressIndicator();
+                          }
+                          print(snapshot.data);
+                          return const Text('data');
+                        },
+                      );
+
+                      return const Center(child: Text('pantalla'));
                     },
                   ),
                 ),

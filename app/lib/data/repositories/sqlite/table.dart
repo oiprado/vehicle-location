@@ -1,0 +1,3 @@
+mixin Table {
+  String getTableName();
+}

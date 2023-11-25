@@ -22,8 +22,8 @@ class MapView extends StatelessWidget {
     final CameraPosition initialCameraPosition =
         CameraPosition(target: this.initialCameraPosition, zoom: 16);
 
-    _createMarkers();
-    _convertToPolylines(route);
+    // _createMarkers();
+    // _convertToPolylines(route);
 
     final size = MediaQuery.of(context).size;
 
@@ -48,6 +48,8 @@ class MapView extends StatelessWidget {
     // for (int i = 0; i < route.length; i++) {
 
     // }
+
+    if (route.length < 1) return;
 
     _markers.add(Marker(
       markerId: const MarkerId("1"),
